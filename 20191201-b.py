@@ -18,4 +18,4 @@ for mass in data:
             total_fuel += left_mass
 
 print(str(total_fuel))
-#puzzle.answer_b(str(total_fuel))
+puzzle.answer_b(str(total_fuel))

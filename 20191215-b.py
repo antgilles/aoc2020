@@ -38,16 +38,14 @@ def intcode(data):
             curs += 4
         elif op[-1] == '3':
             #print("INTCODE waitinput")
-            output.put(bufferout)
-            bufferout = []
             if op[-3] == '2':
                 data[data[curs + 1] + base] = input.get()
             else:
                 data[data[curs + 1]] = input.get()
             curs += 2
         elif op[-1] == '4':
-            print(getdata(op, curs, 1, base, data))
-            bufferout.append(getdata(op, curs, 1, base, data))
+            #print(getdata(op, curs, 1, base, data))
+            output.put(getdata(op, curs, 1, base, data))
             curs += 2
             nboutput = (nboutput + 1) % 2
 
@@ -87,79 +85,82 @@ def intcode(data):
     output.put(-1)
     return
 
-def robot():
-    screen = [ [0]*50 for i in range(25)]
-    while True:
-        score = 0
-        #print('ROBOT - waitoutput')
+
+
+def robot(pos=(0,0), screen = {'ymin':0, 'ymax':0, 'xmin':0,'xmax':0, 0: {0: 5}}):
+    direction = [(0,-1,2),(0,1,1),(-1,0,4),(1,0,3)]
+    for dir in range(1,5):
+        newpos = (pos[0] + direction[dir - 1][0], pos[1] + direction[dir - 1][1])
+        #print(newpos)
+        if newpos[0] < screen['xmin']: screen['xmin'] = newpos[0]
+        elif newpos[0] > screen['xmax']: screen['xmax'] = newpos[0]
+        if newpos[1] < screen['ymin']: screen['ymin'] = newpos[1]
+        elif newpos[1] > screen['ymax']: screen['ymax'] = newpos[1]
+        if newpos[1] in screen and newpos[0] in screen[newpos[1]]:
+            #print("depuis pos %s pour direction %s : already visited" % (pos, dir))
+            continue
+        input.put(dir)
         data = output.get()
-        print(data)
-        #printscreen(screen,data)
-        boardnew, ball, scorenew = processoutput(data)
-        if boardnew:
-            board = boardnew
-        if scorenew:
-            score = scorenew
-        if ball < board:
-            input.put(-1)
-        elif ball > board:
-            input.put(1)
-        else:
-            input.put(0)
-        #print(board, ball, score)
-        #print(score)
+        #print("resultat intcode depuis pos %s pour direction %s : %s" % (pos, dir, data))
 
+        if newpos[1] not in screen:
+            screen[newpos[1]]={}
+        screen[newpos[1]][newpos[0]] = data
+        if data != 0:
+            #print("call robot with %s and screen %s" % (newpos,screen))
+            robot(newpos, screen)
+            input.put(direction[dir - 1][2])
+            output.get()
+        if data == 2:
+            print(newpos)
+    if pos == (0,0):
+        input.put(0)
+        printscreen(screen)
+        print(fullox(screen))
 
+def fullox(screen):
+    visited=[]
+    q = []
+    q.append((-18,12,0))
+    print(screen)
+    lasttime = 0
+    while q:
+        node = q.pop(0)
+        lasttime = node[2]
+        if node not in visited:
+            visited.append((node[0],node[1]))
+            for dir in [(0,-1),(0,1),(-1,0),(1,0)]:
+                if (node[0] + dir[0], node[1] + dir[1]) not in visited:
+                    if screen[node[1]+ dir[1]][node[0]+ dir[0]] == 1:
+                        q.append((node[0]+ dir[0], node[1]+ dir[1],node[2]+1))
+    return lasttime
 
-
-def processoutput(data):
-    score = None
-    board = None
-
-    for curs in range(0,len(data),3):
-        #print(data[curs], data[curs+1], data[curs+2])
-        if data[curs] == -1:
-            score = data[curs +2]
-        if data[curs +2] == 3:
-            board = data[curs]
-        if data[curs +2] == 4:
-            ball = data[curs]
-    return board, ball, score
-
-def printscreen(screen, data):
-    trans = {0: " ",1: "#", 2: "B", 3: "-", 4: "0"}
-    for curs in range(0,len(data),3):
-        if data[curs] == -1:
-            score = data[curs +2]
-        else:
-            #print(curs)
-            screen[data[curs+1]][data[curs]] = data[curs +2]
-            #print(screen)
-    for y in range(len(screen)):
+def printscreen(screen):
+    print('------------------------------------------------------------------')
+    trans = {0: "#",1: ".", 2: "B", 3: "-", 4: "0", 5: "S"}
+    for y in range(screen['ymin'], screen['ymax'] + 1):
         print()
-        for x in range(len(screen[y])):
-            print(trans[screen[y][x]],end='')
+        for x in range(screen['xmin'],screen['xmax'] + 1):
+            if y in screen and x in screen[y]:
+                print(trans[screen[y][x]], end='')
+            else:
+                print('?', end='')
     return
 
 def main():
 
 
-    puzzle = Puzzle(year=2019, day=13)
+    puzzle = Puzzle(year=2019, day=15)
     data = puzzle.input_data.split(',')
     data = list(map(int, data))
     data += [0]*2048
-    #t1 = threading.Thread(target=intcode, args=(list(data),))
 
-    #t1.start()
-    #t1.join()
-    data[0]=2
     t1 = threading.Thread(target=intcode, args=(list(data),))
     t2 = threading.Thread(target=robot, args=())
-    t1.start()
     t2.start()
+    t1.start()
     t2.join()
-
-
+    exit()
 
 if __name__ == "__main__":
     # execute only if run as a script

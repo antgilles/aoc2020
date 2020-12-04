@@ -116,8 +116,23 @@ def robot(pos=(0,0), screen = {'ymin':0, 'ymax':0, 'xmin':0,'xmax':0, 0: {0: 5}}
     if pos == (0,0):
         input.put(0)
         printscreen(screen)
+        print(shortestpath(screen))
 
-def shortestpath():
+def shortestpath(screen):
+    visited=[]
+    q = []
+    q.append((0,0,0))
+    print(screen)
+    while q:
+        node = q.pop(0)
+        if node not in visited:
+            visited.append((node[0],node[1]))
+            for dir in [(0,-1),(0,1),(-1,0),(1,0)]:
+                if (node[0] + dir[0], node[1] + dir[1]) not in visited:
+                    if screen[node[1]+ dir[1]][node[0]+ dir[0]] == 1:
+                        q.append((node[0]+ dir[0], node[1]+ dir[1],node[2]+1))
+                    elif screen[node[1]+ dir[1]][node[0]+ dir[0]] == 2:
+                        return node[2] + 1
     return
 
 def printscreen(screen):
@@ -145,7 +160,6 @@ def main():
     t2.start()
     t1.start()
     t2.join()
-    print("end of main")
     exit()
 
 if __name__ == "__main__":

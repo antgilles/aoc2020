@@ -22,6 +22,7 @@ def main():
         contenant = ' '.join(line.split(" contain ")[0].split(' ')[:-1])
         bags[contenant]=[]
         contenus = line.split(" contain ")[1]
+
         for contenu in contenus.split(', '):
             if contenu[-1]=='.':
                 contenu = contenu[:-1]

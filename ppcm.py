@@ -12,8 +12,11 @@ def ppcm(m,n):
     return m*n//pgcd(m,n)
 
 def main():
-    print(ppcm(2028,5898))
-    print(ppcm(1993524,4702))
+    print(ppcm(221,19))
+
+
+
+    #print(ppcm(1993524,4702))
 
 if __name__ == '__main__':
     main() 
